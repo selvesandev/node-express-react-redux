@@ -61,3 +61,47 @@ Here `babel-node` is a part of babel-cli package which will help us to compile o
 ```
 npm run serve
 ``` 
+
+### Serving index.html file to the browser
+```
+import express from 'express';
+import path from 'path';
+
+let app = express();
+
+app.get('/*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../views/index.html'))
+});
+
+app.listen(3000, () => {
+    console.info('Server running on http://localhost:3000');
+});
+
+```
+
+
+### Install `nodemon` for the server.
+```
+npm install --save-dev nodemon
+```
+Setup nodemon server in `package.json` file
+```
+  "scripts": {
+    "start": "nodemon --watch server --exec babel-node -- server/index.js",
+    "serve": "babel-node server/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+```
+
+**Here** we are going to use nodemon and we are going to --watch only server folder because
+the client code that comes outside the server will be watched by webpack. Next we need to execute `--exec babel-node` 
+the provide the file `server/index.js` file to nodemon therefore ` -- server/index.js`  
+```
+"start": "nodemon --watch server --exec babel-node -- server/index.js",
+    
+```
+Go to terminal 
+
+```
+npm start
+```
