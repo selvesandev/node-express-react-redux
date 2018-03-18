@@ -1,10 +1,38 @@
 ```
-npm init -y
-
 git init
 ```
+## Create a package.json File
+As per every node project, the best way to start is by creating a directory and running npm init -y
+```
+npm init -y
+```
 
-#### Single Entry Point
+## Install Babel To Combile our ES6 Code and Create .babelrc file
+Node won't understand our es6 code so we will have to install babel. 
+Now create another file, you can do this through the terminal `touch .babelrc` 
+```
+{"presets": ['env']}
+```
+According to the documentation we just need to use the `env` preset. With `.babelrc` 
+configured, we just need to install the `babel-preset-env`
+```
+npm install babel-preset-env --save-dev
+
+```                                                                     
+
+## Install nodemon for server and bebel-node to compile our server code.
+Next, we should install `nodemon` and `babel-node` globally.
+```
+npm install -g nodemon babel-node
+```
+
+## Install Express
+```
+npm install --save express.
+```
+
+
+## Testing What we have so far by Creating Single Entry Point
 `/server/index.js`
 ```
     import express from 'express';
@@ -21,36 +49,11 @@ git init
 
 ```
 
-### Install Babel To Combile our ES6 Code.
-now navigation to `server` folder and write `node index.js` you will be prompted with a error 
-that's because node won't understand our es6 code so we will have to install babel.
-
-```
-npm install --save-dev babel-cli
-```
-
-Also install Express
-```
-npm install --save express.
-```
-### Setup Babel (.babelrc)
-create a .babelrc file where we are going to use the bebel preset we are going to use.
-``` .babelrc
-{
-  "presets": [
-    "es2015"
-  ]
-}
-```
-Finally download the `es2015` preset
-
-```
-npm install --save-dev babel-preset-es2015
-```
-
+## Configure package.json And Run the server 
 Now open up your `package.json` file and add a npm command.
 ```
 "scripts": {
+    "start":"nodemon --exec babel-node server/index.js"
     "serve": "babel-node server/index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -59,10 +62,11 @@ Here `babel-node` is a part of babel-cli package which will help us to compile o
   
 **No finally you can run you server**
 ```
-npm run serve
+npm start
 ``` 
 
-### Serving index.html file to the browser
+
+## Serving index.html file to the browser
 ```
 import express from 'express';
 import path from 'path';
@@ -80,39 +84,31 @@ app.listen(3000, () => {
 ```
 
 
-### Install `nodemon` for the server.
-```
-npm install --save-dev nodemon
-```
-Setup nodemon server in `package.json` file
-```
-  "scripts": {
-    "start": "nodemon --watch server --exec babel-node -- server/index.js",
-    "serve": "babel-node server/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  }
-```
-
-**Here** we are going to use nodemon and we are going to --watch only server folder because
-the client code that comes outside the server will be watched by webpack. Next we need to execute `--exec babel-node` 
-the provide the file `server/index.js` file to nodemon therefore ` -- server/index.js`  
-```
-"start": "nodemon --watch server --exec babel-node -- server/index.js",
-    
-```
-Go to terminal 
-
-```
-npm start
-```
 
 
 
 ## Rendering our first React Component.
+File Structure.
+```
+root/
+    .babelrc
+    package.json
+    server/server.js
+    webpack.config.js
+    client/
+        style/
+            style.css
+        components/
+            App.js    
+        index.html 
+        index.js        
+```
+
+Install React and React Dom.
+
 ```
 npm install --save react react-dom
 ```
-
 Create `client` folder in the project root directory which `index.js` file init.
 
 ``` index.js
@@ -125,13 +121,13 @@ Create `client` folder in the project root directory which `index.js` file init.
     ReactDOM.render(<App/>,
         document.getElementById('root')
     );
-
 ```
-Create you composer `App.js` inside the components folder in client directory
+
+
+Create you component `App.js` inside the components folder in client directory
 ``` App.js
 
 import React, {Component} from 'react';
-
 
 export default () => {
     return (
@@ -146,14 +142,95 @@ Add `bundle.js` which will be later compiled by webpack into your index.html fil
 <script type="text/javascript" src="bundle.js"></script>
 ```
 
-### Setting up the webpack
-Quickly Download the `webpack` and `webpack-dev-middleware`
+## Setting up the webpack
+index.js should be connected to index.html at the moment we aren't connecting them. We'd do that with webpack.
+  
+First let's tell babel to watch for the react syntax as well - we do that in .babelrc:
 ```
-npm install --save-dev webpack webpack-dev-middleware
+{"presets": ['env', 'react']}
+```
+Of course we'd need to install the preset:   `npm i --save-dev babel-preset-react`
+
+  
+
+## Quickly Download the `webpack` and `webpack-livereload-plugin `
+```
+npm install --save-dev webpack webpack-livereload-plugin 
+```
+### Setting up webpack rules
+```
+module: {
+        rules: [
+            {
+                test: /\.js$/,
+                include: path.join(__dirname, 'client'),
+                use: 'babel-loader'
+            },
+            {
+                use: ['style-loader', 'css-loader'],
+                test: /\.css$/
+            }
+        ]
+    },
+```
+Very self explanatory, we are basically making sure that if the file being processed is with a .js extension, run it through babel-loader package (only in the client folder).
+
+Note that using `babel-loader` seems to require `babel-core` as well.
+
+
+### Adding Sass
+```
+npm i --save-dev sass-loader node-sass
+```
+webpack.config.js
+
+```
+,
+            {
+                test: /\.scss$/,
+                use: [{
+                    loader: "style-loader"
+                },
+                    {
+                        loader: "css-loader", options: {
+                        sourceMap: true
+                    }
+                    },
+                    {
+                        loader: "sass-loader", options: {
+                        sourceMap: true
+                    }
+                    }]
+            }
+```
+With that setup, in ./client/index.js we would be able to import SASS files in our react code and webpack would handle the conversion.
+
+```
+npm i --save-dev babel-loader style-loader css-loader babel-core
+
 ```
 
-As we are using express we will be using `webpack-dev-middleware` package so open up the `index.js` file
-in the server.
+### Setting up plugins
+```
+
+    plugins: [
+        new LiveReloadPlugin(),
+        // new HtmlWebpackPlugin({
+        //     filename: 'index.html',
+        //     template: 'views/index.html'
+        // })
+    ]
+```
+
+## Using the bundle
+We've already decided to use express to send content to the browser.  
+It makes sense that we need to get the bundle from webpack and serve it through express.  
+To do this we will require `webpack-dev-middleware` package 
+so open up the `server/index.js` file in the server.
+```
+npm i --save-dev webpack-dev-middleware
+
+```
 
 ``` index.js
 
@@ -175,8 +252,6 @@ app.listen(3000, () => {
     console.info('Server running on http://localhost:3000');
 });
 
-
-
 ```
 **Benefit of using webpack-dev-middleware**
 * No files are written to disk, rather it handles files in memory
@@ -184,49 +259,64 @@ app.listen(3000, () => {
 * Supports hot module reload (HMR).
 
 
-**NOTE** Here the `webpack.config.dev.js` file is the webpack configuration file 
+**NOTE** Here the `webpack.config.js` file is the webpack configuration file 
 1) Create webpack.config.dev.js
 ```
+import webpack from 'webpack';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import LiveReloadPlugin from 'webpack-livereload-plugin'
+
 import path from 'path';
 
+const env = process.env.NODE_ENV;
+
+
 export default {
+    mode: env || 'development',
     entry: path.join(__dirname, '/client/index.js'),
     output: {
-        path: '/'
-    }
-}
-```
-
-2) webpack does not know anything about javascript therefore we need it to instruct it how to handle javascript files so we need to
-use some kind of loader.
-
-```
-module: {
+        path: '/',
+        filename: 'bundle.js'
+    },
+    module: {
         rules: [
             {
                 test: /\.js$/,
                 include: path.join(__dirname, 'client'),
                 use: 'babel-loader'
+            },
+            {
+                use: ['style-loader', 'css-loader'],
+                test: /\.css$/
+            },
+            {
+                test: /\.scss$/,
+                use: [{
+                    loader: "style-loader"
+                },
+                    {
+                        loader: "css-loader", options: {
+                        sourceMap: true
+                    }
+                    },
+                    {
+                        loader: "sass-loader", options: {
+                        sourceMap: true
+                    }
+                    }]
             }
         ]
-    }
-```
-Here we specified loader as `babel` which will be transpilling es6 code so we will have to install the `babel loader`
-```
-npm install --save-dev babel-loader
-```
-
-3) Babel Does not understand react so we need to provide another preset for babel to understant react.
-```
-npm install -save-dev babel-preset-react
-```
-
-Edit the `.babelrc` file
-```
-{
-  "presets": [
-    "es2015",
-    "react"
-  ]
+    },
+    plugins: [
+        new LiveReloadPlugin(),
+        // new HtmlWebpackPlugin({
+        //     filename: 'index.html',
+        //     template: 'views/index.html'
+        // })
+    ]
 }
 ```
+
+2) webpack does not know anything about javascript, css, sass therefore we need it to instruct it how to handle javascript files so we need to
+use some kind of loader.
+
